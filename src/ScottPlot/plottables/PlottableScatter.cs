@@ -202,19 +202,6 @@ namespace ScottPlot
                 for (int i = 0; i < points.Count; i++)
                     DrawPoint(settings, points, i);
 
-                 if (settings.markerDrawer == null)
-                {
-                    drawMarker = MarkerTools.DrawMarker;
-                }
-                else
-                {
-                    drawMarker = settings.markerDrawer.DrawMarker;
-                }
-                for (int i = 0; i < points.Length; i++)
-                {
-                    drawMarker(settings.gfxData, points[i], markerShape, markerSize, color);
-                }
-            }
         }
 
         public void SaveCSV(string filePath, string delimiter = ", ", string separator = "\n")
