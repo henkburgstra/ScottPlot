@@ -1,9 +1,9 @@
-﻿using ScottPlot.Config;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Text;
+using ScottPlot.Config;
 
 namespace ScottPlot
 {
@@ -77,7 +77,8 @@ namespace ScottPlot
 
                 if (y.HasValue)
                 {
-                    if (double.IsNaN(y.Value) || double.IsInfinity(y.Value)) {// double.IsInfinity checks for positive or negative infinity
+                    if (double.IsNaN(y.Value) || double.IsInfinity(y.Value))
+                    {// double.IsInfinity checks for positive or negative infinity
                         continue;
                     }
                     xList.Add(x);
@@ -91,7 +92,8 @@ namespace ScottPlot
 
         public override string ToString()
         {
-            return $"PlottableFunction displaying {GetPointCount()} points";
+            string label = string.IsNullOrWhiteSpace(this.label) ? "" : $" ({this.label})";
+            return $"PlottableFunction{label} displaying {GetPointCount()} points";
         }
 
         public override int GetPointCount()

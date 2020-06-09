@@ -1,8 +1,9 @@
-﻿using ScottPlot.Config;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Text;
+using ScottPlot.Config;
+using ScottPlot.Drawing;
 
 namespace ScottPlot
 {
@@ -23,13 +24,7 @@ namespace ScottPlot
             this.label = label;
             this.lineStyle = lineStyle;
 
-            pen = new Pen(color, (float)lineWidth)
-            {
-                StartCap = System.Drawing.Drawing2D.LineCap.Round,
-                EndCap = System.Drawing.Drawing2D.LineCap.Round,
-                LineJoin = System.Drawing.Drawing2D.LineJoin.Round,
-                DashPattern = StyleTools.DashPattern(lineStyle)
-            };
+            pen = GDI.Pen(color, (float)lineWidth, lineStyle, true);
 
             DragEnabled = draggable;
 
@@ -38,7 +33,8 @@ namespace ScottPlot
 
         public override string ToString()
         {
-            return $"PlottableHLine (Horizontal) at {position}";
+            string label = string.IsNullOrWhiteSpace(this.label) ? "" : $" ({this.label})";
+            return $"PlottableHLine{label} at Y={position}";
         }
 
         public override AxisLimits2D GetLimits()

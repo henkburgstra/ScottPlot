@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ScottPlot;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -10,15 +11,17 @@ using System.Windows.Forms;
 
 namespace FormsPlotSandbox
 {
-    public partial class Form1 : Form
+    public partial class FormSandbox : Form
     {
-        public Form1()
+        public FormSandbox()
         {
             InitializeComponent();
+        }
 
-            double[] dataX = { 0, 0, 0 };
-            double[] dataY = { 0, 0, 0 };
-            formsPlot1.plt.PlotScatter(dataX, dataY);
+        private void FormSandbox_Load(object sender, EventArgs e)
+        {
+            formsPlot1.plt.PlotSignal(DataGen.Sin(51));
+            formsPlot1.plt.PlotSignal(DataGen.Cos(51));
             formsPlot1.Render();
         }
     }

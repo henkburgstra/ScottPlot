@@ -56,6 +56,7 @@ namespace ScottPlot.Demo.WPF
             DemoNameLabel.Content = demoPlot.name;
             SourceCodeLabel.Content = $"{demoPlot.sourceFile} ({demoPlot.categoryClass})";
             DescriptionTextbox.Text = (demoPlot.description is null) ? "no descriton provided..." : demoPlot.description;
+            string sourceCode = demoPlot.GetSourceCode(sourceCodeFolder);
 
             wpfPlot1.Reset();
 
@@ -70,11 +71,11 @@ namespace ScottPlot.Demo.WPF
             {
                 imagePlot.Visibility = Visibility.Hidden;
                 wpfPlot1.Visibility = Visibility.Visible;
+
                 demoPlot.Render(wpfPlot1.plt);
                 wpfPlot1.Render();
             }
 
-            string sourceCode = demoPlot.GetSourceCode(sourceCodeFolder);
             SourceTextBox.Text = sourceCode;
         }
     }

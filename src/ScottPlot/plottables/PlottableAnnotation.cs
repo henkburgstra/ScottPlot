@@ -1,8 +1,8 @@
-﻿using ScottPlot.Config;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Text;
+using ScottPlot.Config;
 
 namespace ScottPlot
 {
@@ -23,7 +23,7 @@ namespace ScottPlot
 
         public PlottableAnnotation(double xPixel, double yPixel, string label,
             double fontSize, string fontName, Color fontColor,
-            bool fill, Color fillColor, 
+            bool fill, Color fillColor,
             double lineWidth, Color lineColor,
             bool shadow)
         {

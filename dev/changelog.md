@@ -1,30 +1,44 @@
 # ScottPlot Changelog
 
-## Primary Version History
+## ScottPlot 4.0.35
+* Added `processEvents` argument to `formsPlot2.Render()` to provide a performance enhancement when linking axes of two `FormsPlot` controls together (by calling `Plot.MatchAxis()` from the control's `AxesChanged` event, as seen in the _Linked Axes_ demo application) (#451, #452) _Thanks @StendProg and @robokamran_
+* New `Plot.PlotVectorField()` method for displaying vector fields (sometimes called quiver plots) (#438, #439, #440) _Thanks @Benny121221 and @hhubschle_
+* Included an experimental colormap module which is likely to evolve over subsequent releases (#420, #424, #442) _Thanks @Benny121221_
+* `PlotScatterHighlight()` was created as a type of scatter plot designed specifically for applications where "show value on hover" functionality is desired. Examples are both in the cookbook and WinForms and WPF demo applications. (#415, #414) _Thanks @Benny121221 and @StendProg_
+* `PlotRadar()` is a new plot type for creating Radar plots (also called spider plots or star plots). See cookbook and demo application for examples. (#428, #430) _Thanks @Benny121221_
+* `PlotPlolygons()` is a new performance-optimized variant of `PlotPolygon()` designed for displaying large numbers of complex shapes (#426) _Thanks @StendProg_
+* The WinForms control's `Configure()` now has a `showCoordinatesTooltip` argument to continuously display the position at the tip of the cursor as a tooltip (#410) _Thanks @jcbeppler_
+* User controls now use SHIFT (previously ALT) to lock the horizontal axis and ALT (previously SHIFT) while left-click-dragging for zoom-to-region. Holding CTRL+SHIFT while right-click-dragging now zooms evenly, without X/Y distortion. (#436) _Thanks @tomwimmenhove and @StendProg_
+* Parallel processing is now enabled by default. Performance improvements will be most noticeable on Signal plots. (#419, #245, #72)
+* `Plot.PlotBar()` now has an `autoAxis` argument (which defaults `true`) that automatically adjusts the axis limits so the base of the bar graphs touch the edge of the plot area. (#406)
+* OSX-specific DLLs are now only retrieved by NuGet on OSX (#433, #211, #212)
+* Pie charts can now be made with `plt.PlotPie()`. See cookbook and demo application for examples. (#421, #423) _Thanks @Benny121221_
+* `ScottPlot.FormsPlotViewer(Plot)` no longer resets the new window's plot to the default style (#416)  _Thanks @StendProg_
+* Controls now have a `recalculateLayoutOnMouseUp` option to prevent resetting of manually-defined data area padding
 
-_ScottPlot uses [semantic](https://semver.org/) (major.minor.patch) versioning. Patches are typically non-breaking, but switching between major and minor versions may require modification of existing code._
+## ScottPlot 4.0.34
+* Improve display of `PlotSignalXY()` by not rendering markers when zoomed very far out (#402) _Thanks @gobikulandaisamy_
+* Optimized rendering of solid lines which have a user-definable `LineStyle` property. This modification improves grid line rendering and increases performance for most types of plots. (#401, #327) _Thanks @bukkideme and @citizen3942_
 
-* **ScottPlot 4.0** (Nov, 2019) ScottPlot.Plot module became platform-agnostic using .NET Standard and System.Drawing.Common. Total recode, but same API. User controls became separate, platform-specific modules.
-* **ScottPlot 3.0** (May, 2019) Total recode with new API. First version released on NuGet.
-* **ScottPlot 2.0** (Jan, 2019) Total recode with new API. First version to get its own GitHub project. 
-* **ScottPlot 1.0** (June, 2017) ScottPlot began as [swhPlot.cs](https://github.com/swharden/Csharp-Data-Visualization/blob/master/projects/17-06-24_stretchy_line_plot/pixelDrawDrag2/swhPlot.cs), a 150 line class used to create a [stretchy line plot](https://github.com/swharden/Csharp-Data-Visualization/tree/master/projects/17-06-24_stretchy_line_plot) demonstrating how to draw lines interactively with C#.
+## ScottPlot 4.0.33
+* Force grid lines to always draw using anti-aliasing. This compensates for a bug in `System.Drawing` that may cause diagonal line artifacts to appear when the user controls were panned or zoomed. (#401, #327) _Thanks @bukkideme and @citizen3942_
 
-## Coming Soon
+## ScottPlot 4.0.32
+* User controls now have a `GetMouseCoordinates()` method which returns the DPI-aware position of the mouse in graph coordinates (#379, #380) _Thanks @Benny121221_
+* Default grid color was lightened in the user controls to match the default style (#372)
+* New `PlotSignalXY()` method for high-speed rendering of signal data that has unevenly-spaced X coordinates (#374, #375) _Thanks @StendProg and @LogDogg_
+* Modify `Tools.Log10()` to return `0` instead of `NaN`, improving automatic axis limit detection (#376, #377) _Thanks @Benny121221_
+* WpfPlotViewer and FormsPlotViewer launch in center of parent window (#378)
+* Improve reliability of `Plot.AxisAutoX()` and `Plot.AxisAutoY()` (#382)
+* The `Configure()` method of FormsPlot and WpfPlot controls now have `middleClickMarginX` and `middleClickMarginY` arguments which define horizontal and vertical auto-axis margin used for middle-clicking. Setting horizontal margin to 0 is typical when plotting signals. (#383)
+* `Plot.Grid()` and `Plot.Ticks()` now have a `snapToNearestPixel` argument which controls whether these lines appear anti-aliased or not. For static images non-anti-aliased grid lines and tick marks look best, but for continuously-panning plots anti-aliased lines look better. The default behavior is to enable snapping to the nearest pixel, consistent with previous releases. (#384)
+* Mouse events (MouseDown, MouseMove, etc.) are now properly forwarded to the FormsPlot control (#390) _Thanks @Minu476_
+* Improved rendering of very small candlesticks and OHLCs in financial plots
+* Labeled plottables now display their label in the ToString() output. This is useful when viewing plottables listed in the FormsPlot settings window #391 _Thanks @Minu476_
+* Added a Statistics.Finance module with methods for creating Simple Moving Average (SMA) and Bollinger band technical indicators to Candlestick and OHLC charts. Examples are in the cookbook and demo program. (#397) _Thanks @Minu476_
+* Scatter plots, filled plots, and polygon plots now support Xs and Ys which contain `double.NaN` #396
+* Added support for line styles to Signal plots (#392) _Thanks @bukkideme_
 
-* **This version (4.0.x)** - this list is a reminder of things to complete before proceeding to the next major version.
-  * Add right-click menu to WpfPlot
-  * `Plot.BoxAndWhisker()`
-  * improved bar charts (#244, #260, #277) _Thanks @Benny121221 and @bonzaiferroni and @SoManyUsernamesTaken_
-    * support for stacked box plots
-    * support for horizontal box plots
-  * support for "shade below the curve" (#255) _Thanks @ckovamees_
-* **ScottPlot 4.1**
-  * Refactor plottable module (namespaces will change slightly)
-* **ScottPlot 4.2** 
-  * Remove rendering capabilities from ScottPlot.Plot so the dependency on System.Drawing can be eliminated
-  * Create a GDI rendering module which uses System.Drawing 
-  * Create a SkiaSharp rendering module and user control (supporting OpenGL hardware acceleration)
-  
 ## ScottPlot 4.0.31
 * Created `Plot.PlotBarGroups()` for easier construction of grouped bar plots from 2D data (#367) _Thanks @Benny121221_
 * Plot.PlotScaleBar() adds an L-shaped scalebar to the corner of the plot (#363)

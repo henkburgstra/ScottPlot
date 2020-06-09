@@ -12,7 +12,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Linq;
-using System.Reflection;
+using ScottPlot.Statistics;
 
 namespace ScottPlot
 {
@@ -20,6 +20,13 @@ namespace ScottPlot
     {
         public PixelFormat pixelFormat = PixelFormat.Format32bppPArgb;
         private readonly Settings settings;
+        public bool containsHeatmap
+        {
+            get
+            {
+                return settings.plottables.Where(p => p is PlottableHeatmap).Count() > 0;
+            }
+        }
 
         public Plot(int width = 800, int height = 600)
         {
@@ -96,6 +103,7 @@ namespace ScottPlot
             {
                 settings.bmpFigure = new Bitmap(settings.figureSize.Width, settings.figureSize.Height, pixelFormat);
                 settings.gfxFigure = Graphics.FromImage(settings.bmpFigure);
+                Settings.DPIScale = settings.gfxFigure.DpiX / Settings.defaultDPI;
             }
 
             if (settings.dataSize.Width > 0 && settings.dataSize.Height > 0)
@@ -156,7 +164,7 @@ namespace ScottPlot
         {
             if (!settings.axes.hasBeenSet)
                 settings.AxisAuto();
-            else 
+            else
                 settings.axes.ApplyBounds();
 
             if (!settings.layout.tighteningOccurred)
@@ -554,13 +562,13 @@ namespace ScottPlot
         }
 
         public PlottableScaleBar PlotScaleBar(
-            double sizeX, 
-            double sizeY, 
+            double sizeX,
+            double sizeY,
             string labelX = null,
             string labelY = null,
-            double thickness = 2, 
-            double fontSize = 12, 
-            Color? color = null, 
+            double thickness = 2,
+            double fontSize = 12,
+            Color? color = null,
             double padPx = 10
             )
         {
@@ -568,6 +576,34 @@ namespace ScottPlot
             var scalebar = new PlottableScaleBar(sizeX, sizeY, labelX, labelY, thickness, fontSize, color.Value, padPx);
             Add(scalebar);
             return scalebar;
+        }
+
+        [Obsolete("This method is experimental and may change in subsequent versions")]
+        public PlottableHeatmap PlotHeatmap(
+            double[,] intensities,
+            Config.ColorMaps.Colormaps colorMap = Config.ColorMaps.Colormaps.viridis,
+            string label = null,
+            double[] axisOffsets = null,
+            double[] axisMultipliers = null
+            )
+        {
+            if (axisOffsets == null)
+            {
+                axisOffsets = new double[] { 0, 0 };
+            }
+
+            if (axisMultipliers == null)
+            {
+                axisMultipliers = new double[] { 1, 1 };
+            }
+
+            PlottableHeatmap heatmap = new PlottableHeatmap(intensities, colorMap, label, axisOffsets, axisMultipliers);
+            settings.plottables.Add(heatmap);
+            MatchAxis(this);
+            Ticks(false, false); //I think we need to sort out our own labelling with System.Drawing
+            Layout(y2LabelWidth: 180);
+
+            return heatmap;
         }
 
         public PlottableScatter PlotScatter(
@@ -608,6 +644,56 @@ namespace ScottPlot
             return scatterPlot;
         }
 
+        public PlottableScatterHighlight PlotScatterHighlight(
+           double[] xs,
+           double[] ys,
+           Color? color = null,
+           double lineWidth = 1,
+           double markerSize = 5,
+           string label = null,
+           double[] errorX = null,
+           double[] errorY = null,
+           double errorLineWidth = 1,
+           double errorCapSize = 3,
+           MarkerShape markerShape = MarkerShape.filledCircle,
+           LineStyle lineStyle = LineStyle.Solid,
+           MarkerShape highlightedShape = MarkerShape.openCircle,
+           Color? highlightedColor = null,
+           double? highlightedMarkerSize = null
+           )
+        {
+            if (color is null)
+                color = settings.GetNextColor();
+
+            if (highlightedColor is null)
+                highlightedColor = Color.Red;
+
+            if (highlightedMarkerSize is null)
+                highlightedMarkerSize = 2 * markerSize;
+
+            PlottableScatterHighlight scatterPlot = new PlottableScatterHighlight(
+                xs: xs,
+                ys: ys,
+                color: (Color)color,
+                lineWidth: lineWidth,
+                markerSize: markerSize,
+                label: label,
+                errorX: errorX,
+                errorY: errorY,
+                errorLineWidth: errorLineWidth,
+                errorCapSize: errorCapSize,
+                stepDisplay: false,
+                markerShape: markerShape,
+                lineStyle: lineStyle,
+                highlightedShape: highlightedShape,
+                highlightedColor: highlightedColor.Value,
+                highlightedMarkerSize: highlightedMarkerSize.Value
+                );
+
+            settings.plottables.Add(scatterPlot);
+            return scatterPlot;
+        }
+
         public PlottableErrorBars PlotErrorBars(
             double[] xs,
             double[] ys,
@@ -639,6 +725,25 @@ namespace ScottPlot
 
             settings.plottables.Add(errorBars);
             return errorBars;
+        }
+
+        public PlottableRadar PlotRadar(
+            double[,] values,
+            string[] categoryNames = null,
+            string[] groupNames = null,
+            Color[] fillColors = null,
+            double fillAlpha = .4,
+            Color? webColor = null
+            )
+        {
+            fillColors = fillColors ?? Enumerable.Range(0, values.Length).Select(i => settings.colors.GetColor(i)).ToArray();
+            webColor = webColor ?? Color.Gray;
+
+            var plottable = new PlottableRadar(values, categoryNames, groupNames, fillColors, (byte)(fillAlpha * 256), webColor.Value);
+            settings.plottables.Add(plottable);
+            MatchAxis(this);
+
+            return plottable;
         }
 
         public PlottableAnnotation PlotAnnotation(
@@ -683,6 +788,28 @@ namespace ScottPlot
 
             Add(plottable);
             return plottable;
+        }
+
+        [Obsolete("This method is experimental and may change in subsequent versions")]
+        public PlottableVectorField PlotVectorField(
+            Vector2[,] vectors,
+            double[] xs,
+            double[] ys,
+            string label = null,
+            Color? color = null,
+            Config.ColorMaps.Colormap colormap = null,
+            double scaleFactor = 1
+            )
+        {
+            if (!color.HasValue)
+            {
+                color = settings.GetNextColor();
+            }
+
+            var vectorField = new PlottableVectorField(vectors, xs, ys, label, color.Value, colormap, scaleFactor);
+
+            settings.plottables.Add(vectorField);
+            return vectorField;
         }
 
         public PlottableScatter PlotArrow(
@@ -791,6 +918,37 @@ namespace ScottPlot
             settings.plottables.Add(stepPlot);
             return stepPlot;
         }
+        public PlottableSignalXY PlotSignalXY(
+            double[] xs,
+            double[] ys,
+            Color? color = null,
+            double lineWidth = 1,
+            double markerSize = 5,
+            string label = null,
+            int? maxRenderIndex = null,
+            LineStyle lineStyle = LineStyle.Solid
+            )
+        {
+            if (color == null)
+                color = settings.GetNextColor();
+
+            if (maxRenderIndex == null)
+                maxRenderIndex = ys.Length - 1;
+
+            PlottableSignalXY signal = new PlottableSignalXY(
+                xs: xs,
+                ys: ys,
+                color: (Color)color,
+                lineWidth: lineWidth,
+                markerSize: markerSize,
+                label: label,
+                maxRenderIndex: (int)maxRenderIndex,
+                lineStyle: lineStyle
+                );
+
+            settings.plottables.Add(signal);
+            return signal;
+        }
 
         public PlottableSignal PlotSignal(
             double[] ys,
@@ -802,7 +960,8 @@ namespace ScottPlot
             double markerSize = 5,
             string label = null,
             Color[] colorByDensity = null,
-            int? maxRenderIndex = null
+            int? maxRenderIndex = null,
+            LineStyle lineStyle = LineStyle.Solid
             )
         {
             if (color == null)
@@ -820,9 +979,9 @@ namespace ScottPlot
                 lineWidth: lineWidth,
                 markerSize: markerSize,
                 label: label,
-                useParallel: settings.misc.useParallel,
                 colorByDensity: colorByDensity,
-                maxRenderIndex: (int)maxRenderIndex
+                maxRenderIndex: (int)maxRenderIndex,
+                lineStyle: lineStyle
                 );
 
             settings.plottables.Add(signal);
@@ -851,12 +1010,31 @@ namespace ScottPlot
                 color: (Color)color,
                 lineWidth: lineWidth,
                 markerSize: markerSize,
-                label: label,
-                useParallel: settings.misc.useParallel
+                label: label
                 );
 
             settings.plottables.Add(signal);
             return signal;
+        }
+
+        public PlottablePie PlotPie(
+            double[] values,
+            string[] sliceLabels = null,
+            Color[] colors = null,
+            bool explodedChart = false,
+            bool showValues = false,
+            bool showPercentages = false,
+            bool showLabels = true,
+            string label = null
+            )
+        {
+            if (colors is null)
+                colors = Enumerable.Range(0, values.Length).Select(i => settings.colors.GetColor(i % 10)).ToArray();
+
+            PlottablePie pie = new PlottablePie(values, sliceLabels, colors, explodedChart, showValues, showPercentages, showLabels, label);
+
+            settings.plottables.Add(pie);
+            return pie;
         }
 
         public PlottableBar PlotBar(
@@ -874,7 +1052,8 @@ namespace ScottPlot
             double errorCapSize = .38,
             Color? errorColor = null,
             bool horizontal = false,
-            bool showValues = false
+            bool showValues = false,
+            bool autoAxis = true
             )
         {
             if (fillColor == null)
@@ -905,6 +1084,16 @@ namespace ScottPlot
                 );
 
             settings.plottables.Add(barPlot);
+
+            if (autoAxis)
+            {
+                AxisAuto();
+                if (horizontal)
+                    Axis(x1: 0);
+                else
+                    Axis(y1: 0);
+            }
+
             return barPlot;
         }
 
@@ -945,7 +1134,7 @@ namespace ScottPlot
                 double[] barYs = ys[i];
                 double[] barYerr = yErr?[i];
                 double[] barXs = DataGen.Consecutive(barYs.Length);
-                bars[i] = PlotBar(barXs, barYs, barYerr, seriesLabels[i], barWidth * barWidthFraction, offset, 
+                bars[i] = PlotBar(barXs, barYs, barYerr, seriesLabels[i], barWidth * barWidthFraction, offset,
                     errorCapSize: errorCapSize, showValues: showValues);
             }
             XTicks(DataGen.Consecutive(groupLabels.Length, offset: (groupWidthFraction - barWidth) / 2), groupLabels);
@@ -1138,6 +1327,37 @@ namespace ScottPlot
             return plottable;
         }
 
+        public PlottablePolygons PlotPolygons(
+            List<List<(double x, double y)>> polys,
+            string label = null,
+            double lineWidth = 0,
+            Color? lineColor = null,
+            bool fill = true,
+            Color? fillColor = null,
+            double fillAlpha = 1
+            )
+        {
+            if (lineColor is null)
+                lineColor = settings.GetNextColor();
+
+            if (fillColor is null)
+                fillColor = settings.GetNextColor();
+
+            var plottable = new ScottPlot.PlottablePolygons(
+                    polys: polys,
+                    label: label,
+                    lineWidth: lineWidth,
+                    lineColor: lineColor.Value,
+                    fill: fill,
+                    fillColor: fillColor.Value,
+                    fillAlpha: fillAlpha
+                );
+
+            Add(plottable);
+
+            return plottable;
+        }
+
         public PlottablePopulations PlotPopulations(Statistics.Population population, string label = null)
         {
             var plottable = new PlottablePopulations(population, label, settings.GetNextColor());
@@ -1311,11 +1531,15 @@ namespace ScottPlot
             double horizontalMargin = .05,
             double verticalMargin = .1,
             bool xExpandOnly = false,
-            bool yExpandOnly = false
+            bool yExpandOnly = false,
+            bool tightenLayout = true
             )
         {
             settings.AxisAuto(horizontalMargin, verticalMargin, xExpandOnly, yExpandOnly);
-            TightenLayout();
+            if (tightenLayout)
+                TightenLayout();
+            else
+                settings.layout.tighteningOccurred = true;
             return settings.axes.limits;
         }
 
@@ -1324,11 +1548,12 @@ namespace ScottPlot
             bool expandOnly = false
             )
         {
-            double oldY1 = settings.axes.y.min;
-            double oldY2 = settings.axes.y.max;
-            AxisAuto(horizontalMargin: margin, xExpandOnly: expandOnly);
-            Axis(y1: oldY1, y2: oldY2);
-            return settings.axes.limits;
+            if (settings.axes.hasBeenSet == false)
+                AxisAuto();
+
+            double[] originalLimits = Axis();
+            double[] newLimits = AxisAuto(horizontalMargin: margin, xExpandOnly: expandOnly);
+            return Axis(newLimits[0], newLimits[1], originalLimits[2], originalLimits[3]);
         }
 
         public double[] AxisAutoY(
@@ -1336,11 +1561,12 @@ namespace ScottPlot
             bool expandOnly = false
             )
         {
-            double oldX1 = settings.axes.x.min;
-            double oldX2 = settings.axes.x.max;
-            AxisAuto(verticalMargin: margin, yExpandOnly: expandOnly);
-            Axis(x1: oldX1, x2: oldX2);
-            return settings.axes.limits;
+            if (settings.axes.hasBeenSet == false)
+                AxisAuto();
+
+            double[] originalLimits = Axis();
+            double[] newLimits = AxisAuto(verticalMargin: margin, yExpandOnly: expandOnly);
+            return Axis(originalLimits[0], originalLimits[1], newLimits[2], newLimits[3]);
         }
 
         public double[] AxisZoom(
@@ -1571,7 +1797,8 @@ namespace ScottPlot
             bool? logScaleX = null,
             bool? logScaleY = null,
             string numericFormatStringX = null,
-            string numericFormatStringY = null
+            string numericFormatStringY = null,
+            bool? snapToNearestPixel = null
             )
         {
             if (displayTicksX != null)
@@ -1620,6 +1847,8 @@ namespace ScottPlot
                 settings.ticks.x.numericFormatString = numericFormatStringX;
             if (numericFormatStringY != null)
                 settings.ticks.y.numericFormatString = numericFormatStringY;
+            if (snapToNearestPixel != null)
+                settings.ticks.snapToNearestPixel = snapToNearestPixel.Value;
 
             // dont use offset notation if the sign is inverted
             if (settings.ticks.x.invertSign || settings.ticks.y.invertSign)
@@ -1675,7 +1904,8 @@ namespace ScottPlot
             Config.DateTimeUnit? xSpacingDateTimeUnit = null,
             Config.DateTimeUnit? ySpacingDateTimeUnit = null,
             double? lineWidth = null,
-            LineStyle? lineStyle = null
+            LineStyle? lineStyle = null,
+            bool? snapToNearestPixel = null
             )
         {
             if (enable != null)
@@ -1711,6 +1941,8 @@ namespace ScottPlot
             if (lineStyle != null)
                 settings.grid.lineStyle = lineStyle.Value;
 
+            if (snapToNearestPixel != null)
+                settings.grid.snapToNearestPixel = snapToNearestPixel.Value;
         }
 
         public void Frame(
@@ -1840,7 +2072,7 @@ namespace ScottPlot
                 settings.axes.y.min = sourcePlot.settings.axes.y.min;
                 settings.axes.y.max = sourcePlot.settings.axes.y.max;
             }
-            Resize();
+            TightenLayout();
         }
 
         // TODO: create a new Style()

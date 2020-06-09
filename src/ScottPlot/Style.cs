@@ -48,25 +48,6 @@ namespace ScottPlot
 
     public static class StyleTools
     {
-        public static float[] DashPattern(LineStyle lineStyle)
-        {
-            switch (lineStyle)
-            {
-                case LineStyle.Solid: return new float[] { 1.0F };
-                case LineStyle.Dash: return new float[] { 8.0F, 4.0F };
-                case LineStyle.DashDot: return new float[] { 8.0F, 4.0F, 2.0F, 4.0F };
-                case LineStyle.DashDotDot: return new float[] { 8.0F, 4.0F, 2.0F, 4.0F, 2.0F, 4.0F };
-                case LineStyle.Dot: return new float[] { 2.0F, 4.0F };
-                default: return null;
-            }
-        }
-
-        [Obsolete("dash style should always be solid. It's the dash PATTERN that actually changes.", true)]
-        public static System.Drawing.Drawing2D.DashStyle DashStyle(LineStyle lineStyle)
-        {
-            return System.Drawing.Drawing2D.DashStyle.Solid;
-        }
-
         public static void SetStyle(Plot existingPlot, Style style)
         {
             switch (style)
@@ -163,7 +144,7 @@ namespace ScottPlot
                     existingPlot.Style(
                         figBg: SystemColors.Control,
                         dataBg: Color.White,
-                        grid: Color.LightGray,
+                        grid: ColorTranslator.FromHtml("#efefef"),
                         tick: Color.Black,
                         label: Color.Black,
                         title: Color.Black
@@ -188,7 +169,6 @@ namespace ScottPlot
                         figBg: Color.White,
                         dataBg: Color.White,
                         grid: ColorTranslator.FromHtml("#efefef"),
-                        //grid: Color.LightGray,
                         tick: Color.Black,
                         label: Color.Black,
                         title: Color.Black

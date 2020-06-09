@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Drawing;
 using ScottPlot.Config;
 
 namespace ScottPlot
@@ -202,7 +202,8 @@ namespace ScottPlot
 
         public override string ToString()
         {
-            return $"PlottableBar with {GetPointCount()} points";
+            string label = string.IsNullOrWhiteSpace(this.label) ? "" : $" ({this.label})";
+            return $"PlottableBar{label} with {GetPointCount()} points";
         }
 
         public override int GetPointCount()

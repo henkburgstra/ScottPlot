@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Drawing;
 using ScottPlot.Config;
+using ScottPlot.Drawing;
 
 namespace ScottPlot
 {
@@ -74,25 +75,14 @@ namespace ScottPlot
             if ((errorY != null) && (xs.Length != errorY.Length))
                 throw new ArgumentException("errorY must be the same length as the original data");
 
-            penLine = new Pen(color, (float)lineWidth)
-            {
-                StartCap = System.Drawing.Drawing2D.LineCap.Round,
-                EndCap = System.Drawing.Drawing2D.LineCap.Round,
-                LineJoin = System.Drawing.Drawing2D.LineJoin.Round,
-                DashPattern = StyleTools.DashPattern(lineStyle)
-            };
-
-            penLineError = new Pen(color, (float)errorLineWidth)
-            {
-                StartCap = System.Drawing.Drawing2D.LineCap.Round,
-                EndCap = System.Drawing.Drawing2D.LineCap.Round,
-                LineJoin = System.Drawing.Drawing2D.LineJoin.Round
-            };
+            penLine = GDI.Pen(color, lineWidth, lineStyle, true);
+            penLineError = GDI.Pen(color, errorLineWidth, LineStyle.Solid, true);
         }
 
         public override string ToString()
         {
-            return $"PlottableScatter with {GetPointCount()} points";
+            string label = string.IsNullOrWhiteSpace(this.label) ? "" : $" ({this.label})";
+            return $"PlottableScatter{label} with {GetPointCount()} points";
         }
 
         public override Config.AxisLimits2D GetLimits()
@@ -139,32 +129,26 @@ namespace ScottPlot
             return new Config.AxisLimits2D(limits);
         }
 
-        PointF[] points;
-        PointF[] pointsStep;
+        protected virtual void DrawPoint(Settings settings, List<PointF> points, int i)
+        {
+            MarkerTools.DrawMarker(settings.gfxData, points[i], markerShape, markerSize, color);
+        }
+
         public override void Render(Settings settings)
         {
             penLine.Color = color;
             penLine.Width = (float)lineWidth;
 
-            if (points is null)
-                points = new PointF[xs.Length];
-
+            // create a List of only valid points
+            List<PointF> points = new List<PointF>(xs.Length);
             for (int i = 0; i < xs.Length; i++)
-                points[i] = settings.GetPixel(xs[i], ys[i]);
-            
-            if (stepDisplay)
-            {
-                if (pointsStep is null)
-                    pointsStep = new PointF[xs.Length * 2 - 1];
-                for (int i = 0; i < points.Length; i++)
-                    pointsStep[i * 2] = points[i];
-                for (int i = 0; i < points.Length - 1; i++)
-                    pointsStep[i * 2 + 1] = new PointF(points[i+1].X, points[i].Y);
-            }
+                if (!double.IsNaN(xs[i]) && !double.IsNaN(ys[i]))
+                    points.Add(settings.GetPixel(xs[i], ys[i]));
 
+            // draw Y errorbars
             if (errorY != null)
             {
-                for (int i = 0; i < points.Length; i++)
+                for (int i = 0; i < points.Count; i++)
                 {
                     PointF errorBelow = settings.GetPixel(xs[i], ys[i] - errorY[i]);
                     PointF errorAbove = settings.GetPixel(xs[i], ys[i] + errorY[i]);
@@ -177,9 +161,10 @@ namespace ScottPlot
                 }
             }
 
+            // draw X errorbars
             if (errorX != null)
             {
-                for (int i = 0; i < points.Length; i++)
+                for (int i = 0; i < points.Count; i++)
                 {
                     PointF errorLeft = settings.GetPixel(xs[i] - errorX[i], ys[i]);
                     PointF errorRight = settings.GetPixel(xs[i] + errorX[i], ys[i]);
@@ -192,17 +177,30 @@ namespace ScottPlot
                 }
             }
 
-            if (penLine.Width > 0 && points.Length > 1)
+            // draw the lines connecting points
+            if (penLine.Width > 0 && points.Count > 1)
             {
                 if (stepDisplay)
-                    settings.gfxData.DrawLines(penLine, pointsStep);
+                {
+                    List<PointF> pointsStep = new List<PointF>(points.Count * 2);
+                    for (int i = 0; i < points.Count - 1; i++)
+                    {
+                        pointsStep.Add(points[i]);
+                        pointsStep.Add(new PointF(points[i + 1].X, points[i].Y));
+                    }
+                    pointsStep.Add(points[points.Count - 1]);
+                    settings.gfxData.DrawLines(penLine, pointsStep.ToArray());
+                }
                 else
-                    settings.gfxData.DrawLines(penLine, points);
+                {
+                    settings.gfxData.DrawLines(penLine, points.ToArray());
+                }
             }
 
-            if ((markerSize > 0) && (markerShape != MarkerShape.none || settings.markerDrawer != null))
-            {
-                Action<Graphics, PointF, MarkerShape, float, Color> drawMarker;
+            // draw a marker at each point
+            if ((markerSize > 0) && (markerShape != MarkerShape.none))
+                for (int i = 0; i < points.Count; i++)
+                    DrawPoint(settings, points, i);
 
                  if (settings.markerDrawer == null)
                 {

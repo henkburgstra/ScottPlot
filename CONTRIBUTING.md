@@ -10,6 +10,7 @@ ScottPlot is made better by contributions from the open-source community!
   * Include a screenshot if it would help communicate the problem
 
 ## Suggest a Feature
+* Check the [ScottPlot roadmap](https://github.com/swharden/ScottPlot/blob/master/dev/roadmap.md) to see if the feature is already planned for a future release
 * Open an [issue](https://github.com/swharden/ScottPlot/issues) and describe the feature as clearly as possible
 * Include example source code demonstrating how a user might use this new feature
 * Include pictures if it would help communicate the new feature
@@ -19,6 +20,14 @@ ScottPlot is made better by contributions from the open-source community!
 * ⚠️ To make your change easy to review, only modify the minimum number of lines/files necessary to implement the change
 * If you are considering make a large change, create an issue first so the authors may suggest ideal implementation
 * You don't have to create an issue if the bug is sufficiently described in the pull request
+
+## Automatic Code Formatting
+The build will fail if code in pull requests has not been auto-formatted. Auto-format your code in Visual Studio, or from the console using these commands:
+```
+cd ScottPlot/src/
+dotnet tool install --global dotnet-format
+dotnet format
+```
 
 ## Modify an Existing Plottable Object
 
@@ -46,3 +55,7 @@ _You can model your demonstration code after [Polygon.cs](https://github.com/swh
 * **Step 3:** Make a pull request. The open source community will evaluate your new plottable and provide feedback. The pull request page will be used to evaluate and discuss the new plottable.\
 \
 After development and modification of the new plottable has finished, a ScottPlot administrator will merge the pull request, move the plottable from `/tests` to `/ScottPlot/plottables`, add a public method in the `ScottPlot.Plot` module, and create cookbook examples based on the test code.
+
+## ScottPlot Roadmap
+
+Large-scale future goals for this project are outlined on [dev/roadmap.md](dev/roadmap.md)

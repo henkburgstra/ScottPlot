@@ -1,9 +1,10 @@
-﻿using ScottPlot.Config;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using ScottPlot.Config;
+using ScottPlot.Drawing;
 
 namespace ScottPlot
 {
@@ -40,13 +41,7 @@ namespace ScottPlot
             this.color = color;
             this.label = label;
 
-            penLine = new Pen(this.color, (float)lineWidth)
-            {
-                StartCap = System.Drawing.Drawing2D.LineCap.Round,
-                EndCap = System.Drawing.Drawing2D.LineCap.Round,
-                LineJoin = System.Drawing.Drawing2D.LineJoin.Round,
-                DashPattern = StyleTools.DashPattern(lineStyle)
-            };
+            penLine = GDI.Pen(this.color, (float)lineWidth, lineStyle, true);
         }
 
         private double[] SanitizeErrors(double[] errorArray, int expectedLength)
@@ -66,7 +61,8 @@ namespace ScottPlot
 
         public override string ToString()
         {
-            return $"PlottableErrorBars with {GetPointCount()} points";
+            string label = string.IsNullOrWhiteSpace(this.label) ? "" : $" ({this.label})";
+            return $"PlottableErrorBars{label} with {GetPointCount()} points";
         }
 
         public override Config.AxisLimits2D GetLimits()

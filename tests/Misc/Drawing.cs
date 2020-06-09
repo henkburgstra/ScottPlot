@@ -3,6 +3,7 @@ using ScottPlot;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Text;
 
 namespace ScottPlotTests.Misc
@@ -120,6 +121,55 @@ namespace ScottPlotTests.Misc
             var plt = new ScottPlot.Plot(400, 300);
             plt.Axis(0, 3, 0, 3);
             TestTools.SaveFig(plt);
+        }
+
+        [Test]
+        public void Test_MeasureString_ShowSize()
+        {
+            string testString = "ScottPlot";
+
+            var fontName = ScottPlot.Config.Fonts.GetDefaultFontName();
+            float fontSize = 14;
+
+            // an active Graphics object is required to measure a string...
+            using (var bmp = new System.Drawing.Bitmap(1, 1))
+            using (var gfx = System.Drawing.Graphics.FromImage(bmp))
+            using (var font = new System.Drawing.Font(fontName, fontSize))
+            {
+                var stringSize = ScottPlot.Drawing.GDI.MeasureString(gfx, testString, font);
+
+                var sb = new StringBuilder();
+                sb.AppendLine(System.Environment.OSVersion.ToString());
+                sb.AppendLine($"The string '{testString}' with font '{fontName}' (size {fontSize}) " +
+                    $"measures: {stringSize.Width}px x {stringSize.Height}px");
+
+                Console.WriteLine(sb);
+            }
+        }
+
+        [Test]
+        public void Test_RenderingArtifacts_Demonstrate()
+        {
+            // Due to a bug in System.Drawing the drawing of perfectly straight lines is
+            // prone to rendering artifacts (diagonal lines) when anti-aliasing is off.
+            // https://github.com/swharden/ScottPlot/issues/327
+            // https://github.com/swharden/ScottPlot/issues/401
+
+            var plt = new ScottPlot.Plot(400, 300);
+            plt.Grid(xSpacing: 2, ySpacing: 2, color: Color.Red);
+            plt.Axis(-13, 13, -10, 10);
+
+            // create conditions to reveal rendering artifact
+            plt.AntiAlias(false, false, false);
+            plt.Grid(enableVertical: false);
+
+            // save the figure (bmpData + bmpFigure)
+            TestTools.SaveFig(plt);
+
+            // save the data bitmap too
+            string gfxFilePath = System.IO.Path.GetFullPath("diag.png");
+            plt.GetSettings(false).bmpData.Save(gfxFilePath, ImageFormat.Png);
+            Console.WriteLine($"SAVED: {gfxFilePath}");
         }
     }
 }

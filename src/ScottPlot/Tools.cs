@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Linq;
 using System.Runtime.InteropServices;
-using System.Diagnostics;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace ScottPlot
 {
@@ -232,11 +232,12 @@ namespace ScottPlot
         {
             double[] dataOut = new double[dataIn.Length];
             for (int i = 0; i < dataOut.Length; i++)
-                dataOut[i] = Math.Log10(dataIn[i]);
+                dataOut[i] = dataIn[i] > 0 ? Math.Log10(dataIn[i]) : 0;
             return dataOut;
         }
 
-        public static (double[] xs, double[] ys) ConvertPolarCoordinates(double[] rs, double[] thetas) {
+        public static (double[] xs, double[] ys) ConvertPolarCoordinates(double[] rs, double[] thetas)
+        {
             double[] xs = new double[rs.Length];
             double[] ys = new double[rs.Length];
 
