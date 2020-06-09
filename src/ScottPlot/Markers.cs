@@ -24,6 +24,11 @@ namespace ScottPlot
         verticalBar,
         triUp,
         triDown,
+        openTriangle,   // vanaf hier
+        arrowheadLeft,  // looks like < with a bigger angle
+        arrowheadRight, // looks like > with a bigger angle
+        bracketLeft,    // looks like [ but wider
+        bracketRight    // looks like ] but wider
     }
 
     public class MarkerTools
@@ -34,8 +39,10 @@ namespace ScottPlot
             Pen pen = new Pen(color);
             Brush brush = new SolidBrush(color);
 
-            PointF corner1 = new PointF(pixelLocation.X - size / 2, pixelLocation.Y - size / 2);
-            PointF corner2 = new PointF(pixelLocation.X + size / 2, pixelLocation.Y + size / 2);
+            float halfSize = size / 2;
+            float x1, x2, y1, y2;
+            PointF corner1 = new PointF(pixelLocation.X - halfSize, pixelLocation.Y - halfSize);
+            PointF corner2 = new PointF(pixelLocation.X + halfSize, pixelLocation.Y + halfSize);
             SizeF bounds = new SizeF(size, size);
             RectangleF rect = new RectangleF(corner1, bounds);
 
@@ -56,10 +63,10 @@ namespace ScottPlot
                 case MarkerShape.filledDiamond:
 
                     // Create points that define polygon.
-                    PointF point1 = new PointF(pixelLocation.X, pixelLocation.Y + size / 2);
-                    PointF point2 = new PointF(pixelLocation.X - size / 2, pixelLocation.Y);
-                    PointF point3 = new PointF(pixelLocation.X, pixelLocation.Y - size / 2);
-                    PointF point4 = new PointF(pixelLocation.X + size / 2, pixelLocation.Y);
+                    PointF point1 = new PointF(pixelLocation.X, pixelLocation.Y + halfSize);
+                    PointF point2 = new PointF(pixelLocation.X - halfSize, pixelLocation.Y);
+                    PointF point3 = new PointF(pixelLocation.X, pixelLocation.Y - halfSize);
+                    PointF point4 = new PointF(pixelLocation.X + halfSize, pixelLocation.Y);
 
                     PointF[] curvePoints = { point1, point2, point3, point4 };
 
@@ -69,10 +76,10 @@ namespace ScottPlot
                 case MarkerShape.openDiamond:
 
                     // Create points that define polygon.
-                    PointF point5 = new PointF(pixelLocation.X, pixelLocation.Y + size / 2);
-                    PointF point6 = new PointF(pixelLocation.X - size / 2, pixelLocation.Y);
-                    PointF point7 = new PointF(pixelLocation.X, pixelLocation.Y - size / 2);
-                    PointF point8 = new PointF(pixelLocation.X + size / 2, pixelLocation.Y);
+                    PointF point5 = new PointF(pixelLocation.X, pixelLocation.Y + halfSize);
+                    PointF point6 = new PointF(pixelLocation.X - halfSize, pixelLocation.Y);
+                    PointF point7 = new PointF(pixelLocation.X, pixelLocation.Y - halfSize);
+                    PointF point8 = new PointF(pixelLocation.X + halfSize, pixelLocation.Y);
 
                     PointF[] curvePoints2 = { point5, point6, point7, point8 };
 
@@ -144,6 +151,47 @@ namespace ScottPlot
                     //Draw polygon to screen
                     gfx.DrawPolygon(pen, curvePoints4);
 
+                    break;
+                case MarkerShape.openTriangle:
+                    gfx.DrawPolygon(pen, new PointF[] {
+                        new PointF(pixelLocation.X, pixelLocation.Y - halfSize),
+                        new PointF(pixelLocation.X - halfSize, pixelLocation.Y + halfSize),
+                        new PointF(pixelLocation.X + halfSize, pixelLocation.Y + halfSize)
+                    });
+                    break;
+                case MarkerShape.arrowheadLeft:
+                    x1 = pixelLocation.X + halfSize;
+                    x2 = pixelLocation.X - halfSize;
+                    y1 = pixelLocation.Y - halfSize;
+                    y2 = pixelLocation.Y + halfSize;
+                    gfx.DrawLine(pen, new PointF(x1, y1), new PointF(x2, pixelLocation.Y));
+                    gfx.DrawLine(pen, new PointF(x2, pixelLocation.Y), new PointF(x1, y2));
+                    break;
+                case MarkerShape.arrowheadRight:
+                    x1 = pixelLocation.X - halfSize;
+                    x2 = pixelLocation.X + halfSize;
+                    y1 = pixelLocation.Y - halfSize;
+                    y2 = pixelLocation.Y + halfSize;
+                    gfx.DrawLine(pen, new PointF(x1, y1), new PointF(x2, pixelLocation.Y));
+                    gfx.DrawLine(pen, new PointF(x2, pixelLocation.Y), new PointF(x1, y2));
+                    break;
+                case MarkerShape.bracketLeft:
+                    x1 = pixelLocation.X + halfSize;
+                    x2 = pixelLocation.X - halfSize;
+                    y1 = pixelLocation.Y - halfSize;
+                    y2 = pixelLocation.Y + halfSize;
+                    gfx.DrawLine(pen, new PointF(x1, y1), new PointF(x2, y1));
+                    gfx.DrawLine(pen, new PointF(x2, y1), new PointF(x2, y2));
+                    gfx.DrawLine(pen, new PointF(x2, y2), new PointF(x1, y2));
+                    break;
+                case MarkerShape.bracketRight:
+                    x1 = pixelLocation.X - halfSize;
+                    x2 = pixelLocation.X + halfSize;
+                    y1 = pixelLocation.Y - halfSize;
+                    y2 = pixelLocation.Y + halfSize;
+                    gfx.DrawLine(pen, new PointF(x1, y1), new PointF(x2, y1));
+                    gfx.DrawLine(pen, new PointF(x2, y1), new PointF(x2, y2));
+                    gfx.DrawLine(pen, new PointF(x2, y2), new PointF(x1, y2));
                     break;
                 default:
                     throw new NotImplementedException($"unsupported marker type: {shape}");
